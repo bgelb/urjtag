@@ -110,6 +110,10 @@ if ENABLE_BUS_MPC824X
 libbus_la_SOURCES += mpc824x.c
 endif
 
+if ENABLE_BUS_MPC8272
+libbus_la_SOURCES += mpc8272.c
+endif
+
 if ENABLE_BUS_MPC8313
 libbus_la_SOURCES += mpc8313.c
 endif

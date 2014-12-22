@@ -623,6 +623,7 @@ URJ_DRIVER_SET([bus], [
 	lh7a400
 	mpc5200
 	mpc824x
+	mpc8272
 	mpc8313
 	mpc837x
 	ppc405ep

@@ -154,7 +154,7 @@ mpc8272_bus_new(urj_chain_t *chain, const urj_bus_driver_t *driver,
 
 	/* Control signals */
 	for (i = 0; i < 4; ++i) {
-		sprintf (buff, "WE_DQM_BS_B%d", i);
+		sprintf (buff, "WE_DQM_BS_B(%d)", i);
 		failed |= urj_bus_generic_attach_sig (part, &nWE[i], buff);
 	}
 
@@ -164,7 +164,7 @@ mpc8272_bus_new(urj_chain_t *chain, const urj_bus_driver_t *driver,
 
 	/* Chip select */
 	for (i = 0; i < 6; ++i) {
-		sprintf (buff, "CS_B%d", i);
+		sprintf (buff, "CS_B(%d)", i);
 		failed |= urj_bus_generic_attach_sig (part, &nCS[i], buff);
 	}
 
@@ -173,13 +173,13 @@ mpc8272_bus_new(urj_chain_t *chain, const urj_bus_driver_t *driver,
 
 	/* Address */
 	for (i = 0; i < 32; i++) {
-		sprintf (buff, "A%d", i);
+		sprintf (buff, "A(%d)", i);
 		failed |= urj_bus_generic_attach_sig (part, &A[i], buff);
 	}
 
 	/* Data */
 	for (i = 0; i < 32; i++) {
-		sprintf (buff, "D%d", i);
+		sprintf (buff, "D(%d)", i);
 		failed |= urj_bus_generic_attach_sig (part, &D[i], buff);
 	}
 

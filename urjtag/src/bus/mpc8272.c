@@ -130,8 +130,8 @@ get_data(urj_bus_t *bus, const mpc8272_area_t *area)
 
 	for (i = 0; i < area->area.width; i++)
 	{
-		d |= urj_part_get_signal (bus->part, D[i]) ? 1 : 0;
 		d <<= 1;
+		d |= urj_part_get_signal (bus->part, D[i]) ? 1 : 0;
 	}
 
 	return d;

@@ -47,6 +47,7 @@
 #define MANUFACTURER_SST        0x00BF
 #define MANUFACTURER_TOSHIBA    0x0098
 #define MANUFACTURER_MX         0x00C2
+#define MANUFACTURER_EON	0x001C
 
 /* AMD */
 #define AM29F800BB      0x2258
@@ -88,6 +89,9 @@
 /* MX */
 #define MX29LV400T      0x22B9
 #define MX29LV400B      0x22BA
+
+/* EON */
+#define EN29LV010	0x006E
 
 struct mtd_erase_region_info
 {
@@ -420,6 +424,16 @@ static const struct amd_flash_info table[] = {
         .numeraseregions = 1,
         .regions = {
             { .offset = 0x000000, .erasesize = 0x10000, .numblocks = 16 },
+        }
+    }, {
+        .mfr_id = MANUFACTURER_EON,
+        .dev_id = EN29LV010,
+        .name = "EON EN29LV010",
+        .size = 0x0020000,
+        .interface_width = CFI_INTERFACE_X8,
+        .numeraseregions = 1,
+        .regions = {
+            { .offset = 0x000000, .erasesize = 0x4000, .numblocks = 8 },
         }
     }
 };

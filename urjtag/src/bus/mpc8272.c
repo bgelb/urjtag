@@ -164,8 +164,8 @@ mpc8272_bus_new(urj_chain_t *chain, const urj_bus_driver_t *driver,
 	failed |= urj_bus_generic_attach_sig (part, &nPOE, "OE_B_SDRAS_B_GPL2");
 	failed |= urj_bus_generic_attach_sig (part, &nBCTL0, "BCTL0_B");
 	failed |= urj_bus_generic_attach_sig (part, &nBCTL1, "CS6_BCTL1_SMI_B");
-	failed |= urj_bus_generic_attach_sig (part, &ALE, "PA23");
-	failed |= urj_bus_generic_attach_sig (part, &CLE, "PA22");
+	failed |= urj_bus_generic_attach_sig (part, &ALE, "PA(23)");
+	failed |= urj_bus_generic_attach_sig (part, &CLE, "PA(22)");
 
 	/* Chip select */
 	for (i = 0; i < 6; ++i) {

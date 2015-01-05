@@ -71,7 +71,7 @@ typedef struct {
 	urj_bus_area_t area;
 	unsigned int cs;
 	unsigned int lines;
-	unsigned int toggle_re;
+	unsigned int re_we_strobes;
 	unsigned int wr_flags;
 } mpc8272_area_t;
 
@@ -270,7 +270,7 @@ mpc8272_bus_read_start(urj_bus_t *bus, uint32_t addr)
 	urj_part_set_signal (bus->part, nCS[area->cs], 1, 0);
 	urj_part_set_signal (bus->part, nBCTL0,  1, 0);
 	urj_part_set_signal (bus->part, nBCTL1,  1, 0);
-	urj_part_set_signal (bus->part, nPOE, 1, area->toggle_re);
+	urj_part_set_signal (bus->part, nPOE, 1, area->re_we_strobes);
 
 	setup_address (bus, area, addr);
 	set_data_in (bus, area);
@@ -288,7 +288,7 @@ mpc8272_bus_read_next(urj_bus_t *bus, uint32_t addr)
 
 	area = find_area (bus, addr);
 
-	if(area->toggle_re) {
+	if(area->re_we_strobes) {
 		urj_part_set_signal (bus->part, nPOE, 1, 0);
 		urj_tap_chain_shift_data_registers (bus->chain, 1);
 
@@ -331,7 +331,7 @@ mpc8272_bus_write_flags(urj_bus_t *bus, uint32_t addr, uint32_t data, uint32_t s
 	urj_part_set_signal (bus->part, nBCTL0, 1, 1);
 	urj_part_set_signal (bus->part, nBCTL1,  1, 0);
 	urj_part_set_signal (bus->part, ALE, 1, set_ale);
-	urj_part_set_signal (bus->part, CLE,  1, set_cle);
+	urj_part_set_signal (bus->part, CLE, 1, set_cle);
 	setup_address (bus, area, addr);
 	setup_data (bus, area, data);
 	urj_tap_chain_shift_data_registers (bus->chain, 0);
@@ -340,13 +340,19 @@ mpc8272_bus_write_flags(urj_bus_t *bus, uint32_t addr, uint32_t data, uint32_t s
 	urj_part_set_signal (bus->part, nWE[1], 1, 0);
 	urj_tap_chain_shift_data_registers (bus->chain, 0);
 
+	urj_part_set_signal (bus->part, nWE[0], 1, 1);
+	urj_part_set_signal (bus->part, nWE[1], 1, 1);
+
+	if(area->re_we_strobes) {
+		urj_tap_chain_shift_data_registers (bus->chain, 0);
+		set_data_in (bus, area);
+	}
+
 	urj_part_set_signal (bus->part, nCS[area->cs], 1, !hold_cs);
 	urj_part_set_signal (bus->part, nBCTL0, 1, 1);
 	urj_part_set_signal (bus->part, nBCTL1, 1, 1);
 	urj_part_set_signal (bus->part, ALE, 1, 0);
 	urj_part_set_signal (bus->part, CLE, 1, 0);
-	urj_part_set_signal (bus->part, nWE[0], 1, 1);
-	urj_part_set_signal (bus->part, nWE[1], 1, 1);
 	urj_tap_chain_shift_data_registers (bus->chain, 0);
 }
 

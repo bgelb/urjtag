@@ -60,7 +60,7 @@ typedef struct {
 #define	nCS		((bus_params_t *) bus->params)->ncs
 #define	nWE		((bus_params_t *) bus->params)->nwe
 #define	nPOE		((bus_params_t *) bus->params)->npoe
-#define	ALE 	((bus_params_t *) bus->params)->ale
+#define	ALE		((bus_params_t *) bus->params)->ale
 #define	CLE		((bus_params_t *) bus->params)->cle
 #define	nBCTL0		((bus_params_t *) bus->params)->nbctl0
 #define	nBCTL1		((bus_params_t *) bus->params)->nbctl1
@@ -217,10 +217,9 @@ mpc8272_bus_init(urj_bus_t *bus)
 
 	if (urj_tap_state (bus->chain) != URJ_TAP_STATE_RUN_TEST_IDLE)
 	{
-		/* silently skip initialization if TAP isn't in RUNTEST/IDLE state
-		   this is required to avoid interfering with detect when initbus
-		   is contained in the part description file
-		   URJ_BUS_INIT() will be called latest by URJ_BUS_PREPARE() */
+		/* silently skip initialization if TAP isn't in RUNTEST/IDLE
+		state this is required to avoid interfering with detect when
+		initbus is contained in the part description file URJ_BUS_INIT()		will be called latest by URJ_BUS_PREPARE() */
 		return URJ_STATUS_OK;
 	}
 
@@ -310,6 +309,11 @@ mpc8272_bus_read_end(urj_bus_t *bus)
 
 	area = find_area (bus, LAST_ADDR);
 
+	if(area->re_we_strobes) {
+		urj_part_set_signal (bus->part, nPOE, 1, 0);
+		urj_tap_chain_shift_data_registers (bus->chain, 1);
+	}
+
 	urj_part_set_signal (bus->part, nCS[area->cs], 1, 1);
 	urj_part_set_signal (bus->part, nBCTL0, 1, 1);
 	urj_part_set_signal (bus->part, nBCTL1,  1, 1);
@@ -321,7 +325,8 @@ mpc8272_bus_read_end(urj_bus_t *bus)
 }
 
 static void
-mpc8272_bus_write_flags(urj_bus_t *bus, uint32_t addr, uint32_t data, uint32_t set_ale, uint32_t set_cle, uint32_t hold_cs)
+mpc8272_bus_write_flags(urj_bus_t *bus, uint32_t addr, uint32_t data,
+			uint32_t set_ale, uint32_t set_cle, uint32_t hold_cs)
 {
 	const mpc8272_area_t *area;
 
@@ -373,7 +378,7 @@ mpc8272_bus_write(urj_bus_t *bus, uint32_t addr, uint32_t data)
 		set_cle = (addr >> 1) & 0x01;
 		hold_cs = addr & 0x01;
 	}
- 
+
 	mpc8272_bus_write_flags(bus, addr, data, set_ale, set_cle, hold_cs);
 }
 

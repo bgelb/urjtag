@@ -52,12 +52,16 @@ typedef struct {
 	urj_part_signal_t *ncs[8];
 	urj_part_signal_t *a[32];
 	urj_part_signal_t *d[32];
+	urj_part_signal_t *ale;
+	urj_part_signal_t *cle;
 } bus_params_t;
 
 #define	LAST_ADDR	((bus_params_t *) bus->params)->last_addr
 #define	nCS		((bus_params_t *) bus->params)->ncs
 #define	nWE		((bus_params_t *) bus->params)->nwe
 #define	nPOE		((bus_params_t *) bus->params)->npoe
+#define	ALE 	((bus_params_t *) bus->params)->ale
+#define	CLE		((bus_params_t *) bus->params)->cle
 #define	nBCTL0		((bus_params_t *) bus->params)->nbctl0
 #define	nBCTL1		((bus_params_t *) bus->params)->nbctl1
 #define	A		((bus_params_t *) bus->params)->a
@@ -67,12 +71,14 @@ typedef struct {
 	urj_bus_area_t area;
 	unsigned int cs;
 	unsigned int lines;
+	unsigned int toggle_re;
+	unsigned int wr_flags;
 } mpc8272_area_t;
 
 static const mpc8272_area_t mpc8272_areas[] = {
-	{ { N_("EEPROM"), 0x00000000, 0x10000000, 8  }, 0, 32 },
-	{ { N_("Flash"), 0x10000000, 0x10000000, 8  }, 2, 32 },
-	{ { N_("None"), 0x20000000, 0xE0000000, 0 }, 3, 0 },
+	{ { N_("NOR Flash"), 0x00000000, 0x10000000, 8  }, 0, 32, 0, 0 },
+	{ { N_("NAND Flash"), 0x10000000, 0x10000000, 8  }, 2, 32, 1, 1 },
+	{ { N_("None"), 0x20000000, 0xE0000000, 0 }, 3, 0, 0, 0 },
 };
 
 static const mpc8272_area_t *
@@ -84,7 +90,7 @@ find_area(urj_bus_t *bus, uint32_t addr)
 	{
 		const mpc8272_area_t *area = &mpc8272_areas[i];
 		if (addr >= area->area.start &&
-		    addr < area->area.start + area->area.length)
+			addr < area->area.start + area->area.length)
 			return area;
 	}
 
@@ -116,7 +122,7 @@ setup_data(urj_bus_t *bus, const mpc8272_area_t *area, uint32_t d)
 
 	for (i = 0; i < area->area.width; i++)
 		urj_part_set_signal (bus->part, D[i], 1,
-				     (d >> (area->area.width - i - 1)) & 1);
+					 (d >> (area->area.width - i - 1)) & 1);
 }
 
 static uint32_t
@@ -158,6 +164,8 @@ mpc8272_bus_new(urj_chain_t *chain, const urj_bus_driver_t *driver,
 	failed |= urj_bus_generic_attach_sig (part, &nPOE, "OE_B_SDRAS_B_GPL2");
 	failed |= urj_bus_generic_attach_sig (part, &nBCTL0, "BCTL0_B");
 	failed |= urj_bus_generic_attach_sig (part, &nBCTL1, "CS6_BCTL1_SMI_B");
+	failed |= urj_bus_generic_attach_sig (part, &ALE, "PA23");
+	failed |= urj_bus_generic_attach_sig (part, &CLE, "PA22");
 
 	/* Chip select */
 	for (i = 0; i < 6; ++i) {
@@ -225,6 +233,8 @@ mpc8272_bus_init(urj_bus_t *bus)
 	urj_part_set_signal (bus->part, nBCTL0, 1, 1);
 	urj_part_set_signal (bus->part, nBCTL1, 1, 1);
 	urj_part_set_signal (bus->part, nPOE, 1, 1);
+	urj_part_set_signal (bus->part, ALE, 1, 0);
+	urj_part_set_signal (bus->part, CLE, 1, 0);
 
 	urj_part_set_instruction (bus->part, "SAMPLE/PRELOAD");
 	urj_tap_chain_shift_instructions (bus->chain);
@@ -260,7 +270,7 @@ mpc8272_bus_read_start(urj_bus_t *bus, uint32_t addr)
 	urj_part_set_signal (bus->part, nCS[area->cs], 1, 0);
 	urj_part_set_signal (bus->part, nBCTL0,  1, 0);
 	urj_part_set_signal (bus->part, nBCTL1,  1, 0);
-	urj_part_set_signal (bus->part, nPOE, 1, 0);
+	urj_part_set_signal (bus->part, nPOE, 1, area->toggle_re);
 
 	setup_address (bus, area, addr);
 	set_data_in (bus, area);
@@ -277,6 +287,13 @@ mpc8272_bus_read_next(urj_bus_t *bus, uint32_t addr)
 	uint32_t d;
 
 	area = find_area (bus, addr);
+
+	if(area->toggle_re) {
+		urj_part_set_signal (bus->part, nPOE, 1, 0);
+		urj_tap_chain_shift_data_registers (bus->chain, 1);
+
+		urj_part_set_signal (bus->part, nPOE, 1, 1);
+	}
 
 	setup_address (bus, area, addr);
 	urj_tap_chain_shift_data_registers (bus->chain, 1);
@@ -304,7 +321,7 @@ mpc8272_bus_read_end(urj_bus_t *bus)
 }
 
 static void
-mpc8272_bus_write(urj_bus_t *bus, uint32_t addr, uint32_t data)
+mpc8272_bus_write_flags(urj_bus_t *bus, uint32_t addr, uint32_t data, uint32_t set_ale, uint32_t set_cle, uint32_t hold_cs)
 {
 	const mpc8272_area_t *area;
 
@@ -313,6 +330,8 @@ mpc8272_bus_write(urj_bus_t *bus, uint32_t addr, uint32_t data)
 	urj_part_set_signal (bus->part, nCS[area->cs], 1, 0);
 	urj_part_set_signal (bus->part, nBCTL0, 1, 1);
 	urj_part_set_signal (bus->part, nBCTL1,  1, 0);
+	urj_part_set_signal (bus->part, ALE, 1, set_ale);
+	urj_part_set_signal (bus->part, CLE,  1, set_cle);
 	setup_address (bus, area, addr);
 	setup_data (bus, area, data);
 	urj_tap_chain_shift_data_registers (bus->chain, 0);
@@ -321,13 +340,37 @@ mpc8272_bus_write(urj_bus_t *bus, uint32_t addr, uint32_t data)
 	urj_part_set_signal (bus->part, nWE[1], 1, 0);
 	urj_tap_chain_shift_data_registers (bus->chain, 0);
 
-	urj_part_set_signal (bus->part, nCS[area->cs], 1, 1);
+	urj_part_set_signal (bus->part, nCS[area->cs], 1, !hold_cs);
 	urj_part_set_signal (bus->part, nBCTL0, 1, 1);
 	urj_part_set_signal (bus->part, nBCTL1, 1, 1);
+	urj_part_set_signal (bus->part, ALE, 1, 0);
+	urj_part_set_signal (bus->part, CLE, 1, 0);
 	urj_part_set_signal (bus->part, nWE[0], 1, 1);
 	urj_part_set_signal (bus->part, nWE[1], 1, 1);
 	urj_tap_chain_shift_data_registers (bus->chain, 0);
 }
+
+static void
+mpc8272_bus_write(urj_bus_t *bus, uint32_t addr, uint32_t data)
+{
+	const mpc8272_area_t *area;
+	uint32_t set_ale, set_cle, hold_cs;
+
+	area = find_area (bus, addr);
+
+	set_ale = 0;
+	set_cle = 0;
+	hold_cs = 0;
+
+	if (area->wr_flags) {
+		set_ale = (addr >> 2) & 0x01;
+		set_cle = (addr >> 1) & 0x01;
+		hold_cs = addr & 0x01;
+	}
+ 
+	mpc8272_bus_write_flags(bus, addr, data, set_ale, set_cle, hold_cs);
+}
+
 
 const urj_bus_driver_t urj_bus_mpc8272_bus = {
 	"mpc8272",

@@ -147,7 +147,7 @@ mpc8272_bus_new(urj_chain_t *chain, const urj_bus_driver_t *driver,
 	urj_bus_t *bus;
 	urj_part_t *part;
 	int failed = 0;
-	char buff[10];
+	char buff[32];
 	unsigned int i;
 
 	bus = urj_bus_generic_new (chain, driver, sizeof (bus_params_t));

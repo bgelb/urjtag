@@ -120,6 +120,8 @@ nobase_dist_pkgdata_DATA = \
 	freescale/PARTS \
 	freescale/mpc5200/STEPPINGS \
 	freescale/mpc5200/mpc5200 \
+	freescale/mpc8247/STEPPINGS \
+	freescale/mpc8247/mpc8247 \
 	freescale/mpc8377/STEPPINGS \
 	freescale/mpc8377/mpc8377 \
 	freescale/mpc8378/STEPPINGS \

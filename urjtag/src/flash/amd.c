@@ -429,6 +429,19 @@ amd_flash_print_info (urj_log_level_t ll, urj_flash_cfi_array_t *cfi_array)
             break;
         }
         break;
+    case 0x00BF:
+        urj_log (ll, "SST");
+        urj_log (ll, _("\n\tChip: "));
+        switch (cid & 0xff)
+        {
+        case 0x00D5:
+            urj_log (ll, "SST39LF010");
+            break;
+        default:
+            urj_log (ll, _("Unknown (ID 0x%04x)"), cid);
+            break;
+        }
+        break;
     default:
         urj_log (ll, _("Unknown manufacturer (ID 0x%04x) Chip (ID 0x%04x)"),
                  mid, cid);
@@ -697,7 +710,7 @@ const urj_flash_driver_t urj_flash_amd_16_flash_driver = {
 
 const urj_flash_driver_t urj_flash_amd_8_flash_driver = {
     N_("AMD/Fujitsu Standard Command Set"),
-    N_("supported: AMD 29LV160, AMD 29LV065D, AMD 29LV040B, S29GLxxxN, W19B320AT/B, EON EN29LV010; 1x8 Bit"),
+    N_("supported: AMD 29LV160, AMD 29LV065D, AMD 29LV040B, S29GLxxxN, W19B320AT/B, EON EN29LV010, SST 39LF010; 1x8 Bit"),
     1,                          /* buswidth */
     amd_flash_autodetect8,
     amd_flash_print_info,

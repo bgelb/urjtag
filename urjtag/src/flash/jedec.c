@@ -81,6 +81,7 @@
 /* SST */
 #define SST39LF800      0x2781
 #define SST39LF160      0x2782
+#define SST39LF010      0x00D5
 
 /* Toshiba */
 #define TC58FVT160      0x00C2
@@ -429,6 +430,16 @@ static const struct amd_flash_info table[] = {
         .mfr_id = MANUFACTURER_EON,
         .dev_id = EN29LV010,
         .name = "EON EN29LV010",
+        .size = 0x0020000,
+        .interface_width = CFI_INTERFACE_X8,
+        .numeraseregions = 1,
+        .regions = {
+            { .offset = 0x000000, .erasesize = 0x4000, .numblocks = 8 },
+        }
+    }, {
+        .mfr_id = MANUFACTURER_SST,
+        .dev_id = SST39LF010,
+        .name = "SST39LF010",
         .size = 0x0020000,
         .interface_width = CFI_INTERFACE_X8,
         .numeraseregions = 1,

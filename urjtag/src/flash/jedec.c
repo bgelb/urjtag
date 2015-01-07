@@ -544,9 +544,9 @@ urj_flash_jedec_detect (urj_bus_t *bus, uint32_t adr,
     if (dev_idx < 0 && bw == 8)
     {
         URJ_BUS_WRITE (bus, adr, 0xf0);
-        URJ_BUS_WRITE (bus, adr + 0x555, 0xaa);
-        URJ_BUS_WRITE (bus, adr + 0x2aa, 0x55);
-        URJ_BUS_WRITE (bus, adr + 0x555, 0x90);
+        URJ_BUS_WRITE (bus, adr + 0x5555, 0xaa);
+        URJ_BUS_WRITE (bus, adr + 0x2aaa, 0x55);
+        URJ_BUS_WRITE (bus, adr + 0x5555, 0x90);
 
         manid = URJ_BUS_READ (bus, adr + 0);
         devid = URJ_BUS_READ (bus, adr + 1);
